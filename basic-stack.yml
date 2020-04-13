@@ -2,6 +2,7 @@ version: '3.7'
 
 # TODO healthcheck
 # TODO zero downtime deploy with update_config, rollback_config, restart_policy
+# TODO install global drivers
 
 services:
 
@@ -88,10 +89,33 @@ services:
         - traefik.http.routers.portainer.tls=true
         - traefik.http.routers.portainer.tls.certresolver=cert-resolver
         - traefik.http.routers.portainer.entrypoints=websecure
-      
+
+  registry:
+    image: registry
+    volumes:
+      - registry:/var/lib/registry
+    networks:
+      - traefik
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        # TODO registry should only exist once! There could be multiple manager nodes in the future
+        constraints: [node.role == manager]
+      labels:
+        - traefik.enable=true
+
+        # Redirect all traffic on hostname registry.konradmelzer.de to registry
+        - traefik.http.services.registry.loadbalancer.server.port=5000
+        - traefik.http.routers.registry.rule=Host(`registry.konradmelzer.de`)
+        - traefik.http.routers.registry.tls=true
+        - traefik.http.routers.registry.tls.certresolver=cert-resolver
+        - traefik.http.routers.registry.entrypoints=websecure
+
 volumes:
   portainer_data:
   letsencrypt:
+  registry:
 
 networks:
   agent_network:
