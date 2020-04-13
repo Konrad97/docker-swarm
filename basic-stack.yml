@@ -18,11 +18,11 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entryPoints.websecure.address=:443"
 
-      - "--certificatesResolvers.myresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
-      - "--certificatesResolvers.myresolver.acme.email=melzerkonrad1@gmail.com"
-      - "--certificatesResolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web"
+      # - "--certificatesResolvers.cert-resolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesResolvers.cert-resolver.acme.email=melzerkonrad1@gmail.com"
+      - "--certificatesResolvers.cert-resolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.cert-resolver.acme.httpchallenge=true"
+      - "--certificatesResolvers.cert-resolver.acme.httpChallenge.entryPoint=web"
 
     networks:
       - traefik
@@ -40,13 +40,18 @@ services:
       labels:
         - traefik.enable=true
 
-        - traefik.http.services.traefik.loadbalancer.server.port=8080
+        # Redirect all http traffic to https
+        - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+        - traefik.http.routers.https-redirect.rule=HostRegexp(`{any:.*}`)
+        - traefik.http.routers.https-redirect.middlewares=redirect-to-https
+        - traefik.http.routers.https-redirect.entrypoints=web
 
+        # Redirect all traffic on hostname traefik.konradmelzer.de to traefik dashboard
+        - traefik.http.services.traefik.loadbalancer.server.port=8080
         - traefik.http.routers.traefik.rule=Host(`traefik.konradmelzer.de`)
         - traefik.http.routers.traefik.service=api@internal
-        - traefik.http.routers.traefik.entrypoints=web
         - traefik.http.routers.traefik.tls=true
-        - traefik.http.routers.traefik.tls.certresolver=myresolver
+        - traefik.http.routers.traefik.tls.certresolver=cert-resolver
         - traefik.http.routers.traefik.entrypoints=websecure
 
   agent:
@@ -77,33 +82,13 @@ services:
       labels:
         - traefik.enable=true
 
+        # Redirect all traffic on hostname portainer.konradmelzer.de to portainer dashboard
         - traefik.http.services.portainer.loadbalancer.server.port=9000
-
         - traefik.http.routers.portainer.rule=Host(`portainer.konradmelzer.de`)
         - traefik.http.routers.portainer.tls=true
-        - traefik.http.routers.portainer.tls.certresolver=myresolver
+        - traefik.http.routers.portainer.tls.certresolver=cert-resolver
         - traefik.http.routers.portainer.entrypoints=websecure
-
-  whoami:
-    image: containous/whoami
-    networks:
-      - traefik
-    deploy:
-      labels:
-      - traefik.enable=true
-
-      - traefik.http.services.whoami.loadbalancer.server.port=80
-
-      - traefik.http.routers.whoami.rule=Host(`whoami.konradmelzer.de`)
-      - traefik.http.routers.whoami.tls=true
-      - traefik.http.routers.whoami.tls.certresolver=myresolver
-      - traefik.http.routers.whoami.entrypoints=websecure
-      - traefik.http.routers.middleware=https-redirectscheme
       
-      - traefik.http.middlewares.https-redirectscheme.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-redirectscheme.redirectscheme.permanent=true
-      
-
 volumes:
   portainer_data:
   letsencrypt:
