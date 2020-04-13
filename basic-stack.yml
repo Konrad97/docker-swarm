@@ -9,29 +9,45 @@ services:
     image: traefik
     command:
       - "--api.dashboard=true"
+
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.swarmMode=true"
       - "--providers.docker.network=traefik"
+
       - "--entrypoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+
+      - "--certificatesResolvers.myresolver.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesResolvers.myresolver.acme.email=melzerkonrad1@gmail.com"
+      - "--certificatesResolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+      - "--certificatesResolvers.myresolver.acme.httpChallenge.entryPoint=web"
+
     networks:
       - traefik
     ports:
       - "80:80"
-      - "442:442"
+      - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "letsencrypt:/letsencrypt"
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints: [node.role == manager]
       labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.traefik.rule=Host(`traefik.konradmelzer.de`)"
-        - "traefik.http.routers.traefik.service=api@internal"
-        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
-        - "traefik.http.routers.traefik.entrypoints=web"
+        - traefik.enable=true
+
+        - traefik.http.services.traefik.loadbalancer.server.port=8080
+
+        - traefik.http.routers.traefik.rule=Host(`traefik.konradmelzer.de`)
+        - traefik.http.routers.traefik.service=api@internal
+        - traefik.http.routers.traefik.entrypoints=web
+        - traefik.http.routers.traefik.tls=true
+        - traefik.http.routers.traefik.tls.certresolver=myresolver
+        - traefik.http.routers.traefik.entrypoints=websecure
 
   agent:
     image: portainer/agent
@@ -59,13 +75,38 @@ services:
       placement:
         constraints: [node.role == manager]
       labels:
-        - "traefik.enable=true"
-        - "traefik.http.services.portainer.loadbalancer.server.port=9000"
-        - "traefik.http.routers.portainer.rule=Host(`portainer.konradmelzer.de`)"
-        - "traefik.http.routers.portainer.entrypoints=web"
+        - traefik.enable=true
+
+        - traefik.http.services.portainer.loadbalancer.server.port=9000
+
+        - traefik.http.routers.portainer.rule=Host(`portainer.konradmelzer.de`)
+        - traefik.http.routers.portainer.tls=true
+        - traefik.http.routers.portainer.tls.certresolver=myresolver
+        - traefik.http.routers.portainer.entrypoints=websecure
+
+  whoami:
+    image: containous/whoami
+    networks:
+      - traefik
+    deploy:
+      labels:
+      - traefik.enable=true
+
+      - traefik.http.services.whoami.loadbalancer.server.port=80
+
+      - traefik.http.routers.whoami.rule=Host(`whoami.konradmelzer.de`)
+      - traefik.http.routers.whoami.tls=true
+      - traefik.http.routers.whoami.tls.certresolver=myresolver
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.middleware=https-redirectscheme
+      
+      - traefik.http.middlewares.https-redirectscheme.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirectscheme.redirectscheme.permanent=true
+      
 
 volumes:
   portainer_data:
+  letsencrypt:
 
 networks:
   agent_network:
