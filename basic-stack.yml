@@ -33,6 +33,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - "letsencrypt:/letsencrypt"
+      - "users:/users"
     deploy:
       mode: replicated
       replicas: 1
@@ -113,9 +114,14 @@ services:
         - traefik.http.routers.registry.tls.certresolver=cert-resolver
         - traefik.http.routers.registry.entrypoints=websecure
 
+        # Basic auth
+        - traefik.http.routers.registry.middlewares=registry-auth@docker
+        - traefik.http.middlewares.registry-auth.basicauth.usersfile=/users/usersfile
+
 volumes:
   portainer_data:
   letsencrypt:
+  users:
   registry:
 
 networks:
