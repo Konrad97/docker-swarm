@@ -116,7 +116,7 @@ services:
 
         # Basic auth
         - traefik.http.routers.registry.middlewares=registry-auth@docker
-        - traefik.http.middlewares.registry-auth.basicauth.usersfile=/users/usersfile
+        - traefik.http.middlewares.registry-auth.basicauth.usersfile=/users/registryusersfile
 
 volumes:
   portainer_data:
