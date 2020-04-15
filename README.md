@@ -15,9 +15,9 @@ Now there are 3 things setup for you:
 * Docker registry
 
     To use the registry a few things are needed
-   1. To add a user to the registry that cann pull and push to it add a `registryusersfile` to the `users` volume
+   1. To add a user to the registry that cann pull and push, add a `registryusersfile` to the `users` volume
    2. You can now add the registry with your username and password chosen in the `registryusersfile`
-   3. To pull images from the registry you have to put the **Portainer** name of the registry infront of the image, **not** the registry address
+   3. To pull images from the registry you have to put the registry address infront of your image name
 
 5. To deploy a new stack add it to the stack templates of portainer (The `whoami-stack` is an example for that)
 6. Deploy your added stack!
