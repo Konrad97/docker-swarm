@@ -3,7 +3,7 @@ version: '3.7'
 services:
 
   homepage:
-    image: registry/homepage
+    image: registry.konradmelzer.de/homepage
     networks:
       - traefik
     deploy:

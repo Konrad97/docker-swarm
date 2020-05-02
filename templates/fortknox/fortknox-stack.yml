@@ -3,7 +3,7 @@ version: '3.7'
 services:
 
   fortknox:
-    image: registry/fortknox
+    image: registry.konradmelzer.de/fortknox
     networks:
       - traefik
     deploy:
