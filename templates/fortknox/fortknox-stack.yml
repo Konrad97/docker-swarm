@@ -16,7 +16,22 @@ services:
       - traefik.http.routers.fortknox.tls=true
       - traefik.http.routers.fortknox.tls.certresolver=cert-resolver
       - traefik.http.routers.fortknox.entrypoints=websecure
-      
+
+  knox-website:
+    image: registry.konradmelzer.de/knox-website
+    networks:
+      - traefik
+    deploy:
+      labels:
+      - traefik.enable=true
+
+      # Redirect all traffic on hostname knox-metals.com to knox-website
+      - traefik.http.services.knox-website.loadbalancer.server.port=80
+      - traefik.http.routers.knox-website.rule=Host(`knox-metals.com`)
+      - traefik.http.routers.knox-website.tls=true
+      - traefik.http.routers.knox-website.tls.certresolver=cert-resolver
+      - traefik.http.routers.knox-website.entrypoints=websecure    
+
 networks:
   traefik:
     external: 
